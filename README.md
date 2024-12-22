@@ -1,2 +1,3 @@
-# studious-funicular
-0xInstaller
+# 0xInstaller
+
+A personalized bash script for installing bug bounty tools in a go. 
