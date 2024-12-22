@@ -9,7 +9,7 @@ RED="\e[31m"
 RESET="\e[0m"
 
 # Log file
-LOG_FILE="$HOME/0xInstaller.log"
+LOG_FILE="$HOME/0xInstaller/0xInstaller.log"
 exec > >(tee -i "$LOG_FILE") 2>&1
 
 # Pre-check for root privileges
@@ -32,7 +32,7 @@ display_banner() {
         apt-get install lolcat -y
     fi
     figlet -f smslant "0xInstaller" | lolcat
-    echo -e "Author : Md. Shahriar Alam Shaon ( 0xShahriar )\nVersion : 1.1\n" | lolcat
+    echo -e "Author : Md. Shahriar Alam Shaon ( 0xShahriar )\nVersion : 1.0\n" | lolcat
 }
 
 # Function to check for updates
