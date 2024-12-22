@@ -56,13 +56,13 @@
 1. Clone the repository:
    ```bash
    git clone https://github.com/0xShahriar/0xInstaller.git
-   cd 0xInstaller```
+   cd 0xInstaller
 2. Make the script executable:
    ```bash
-   chmod +x 0xInstaller.sh```
+   chmod +x 0xInstaller.sh
 3. Run the script:
    ```bash
-   sudo ./0xInstaller.sh```
+   sudo ./0xInstaller.sh
 
 ---
 
@@ -70,10 +70,10 @@
 
 - **Normal Execution**: Run the script to install all tools.
    ```bash
-   sudo ./0xInstaller.sh```
+   sudo ./0xInstaller.sh
 - **Dry-Run Mode**: Test the script without making any changes.
    ```bash
-   sudo ./0xInstaller.sh --dry-run```
+   sudo ./0xInstaller.sh --dry-run
 - **Update Checker**: Automatically updates the script from the GitHub repository.
 
 ---
