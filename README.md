@@ -36,7 +36,6 @@
 - **Shuffledns**: Subdomain enumeration tool.
 - **Subfinder**: Subdomain discovery tool.
 - **Ffuf**: Fuzzing tool.
-- **Seclists**: Collection of security wordlists.
 - **Naabu**: Port scanner.
 - **Uncover**: Asset discovery tool.
 - **AWSBucketDump**: Tool for auditing S3 buckets.
