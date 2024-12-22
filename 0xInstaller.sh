@@ -38,14 +38,14 @@ display_banner() {
 # Function to check for updates
 check_for_updates() {
     if [ -d "$SCRIPT_DIR" ]; then
-        echo "Checking for updates..."
+        echo "Checking for updates in $SCRIPT_DIR..."
         cd "$SCRIPT_DIR" || exit
         git fetch origin
         LOCAL=$(git rev-parse HEAD)
         REMOTE=$(git rev-parse origin/main)
         if [ "$LOCAL" != "$REMOTE" ]; then
             echo "Updates found. Pulling latest changes..."
-            git pull origin main
+            git reset --hard origin/main
             chmod +x "$SCRIPT_NAME"
             echo "Updates applied. Re-running the script..."
             exec "$SCRIPT_DIR/$SCRIPT_NAME"
