@@ -26,10 +26,10 @@ SCRIPT_NAME="0xInstaller.sh"
 # Function to display banner
 display_banner() {
     if ! command -v figlet &>/dev/null; then
-        apt install figlet -y
+        apt-get install figlet -y
     fi
     if ! command -v lolcat -i &>/dev/null; then
-        apt install lolcat -y
+        apt-get install lolcat -y
     fi
     figlet -f smslant "0xInstaller" | lolcat
     echo -e "Author : Md. Shahriar Alam Shaon ( 0xShahriar )\nVersion : 1.1\n" | lolcat
@@ -65,7 +65,7 @@ check_for_updates() {
 check_and_install() {
     if ! dpkg -l | grep -q "$1"; then
         echo "Installing $1..."
-        apt install -y "$1"
+        apt-get install -y "$1"
     else
         echo "$1 is already installed."
     fi
@@ -107,7 +107,7 @@ fi
 
 # Update and upgrade system
 if ! $DRY_RUN; then
-    apt update && apt upgrade -y
+    apt-get update && apt-get upgrade -y
 fi
 
 # Display banner
@@ -155,7 +155,7 @@ done
 # Install SecLists
 if [ ! -d "/usr/share/seclists" ]; then
     echo "Installing SecLists..."
-    $DRY_RUN || sudo apt-get install -y seclists
+    $DRY_RUN || apt-get install -y seclists
 else
     echo "SecLists is already installed."
 fi
