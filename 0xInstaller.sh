@@ -71,6 +71,9 @@ check_and_install() {
     fi
 }
 
+# Install libpcap-dev for Go-based tools that require it
+check_and_install "libpcap-dev"
+
 # Function to install Go-based tools
 install_go_tool() {
     local tool=$1
@@ -151,13 +154,5 @@ install_python_tools=(
 for tool_info in "${install_python_tools[@]}"; do
     $DRY_RUN || install_python_tool $tool_info
 done
-
-# Install SecLists
-if [ ! -d "/usr/share/seclists" ]; then
-    echo "Installing SecLists..."
-    $DRY_RUN || apt-get install -y seclists
-else
-    echo "SecLists is already installed."
-fi
 
 echo -e "${GREEN}Installation complete!${RESET}"
