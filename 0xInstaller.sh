@@ -18,11 +18,6 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Variables
-REPO_URL="https://github.com/0xShahriar/0xInstaller.git"
-SCRIPT_DIR="$HOME/0xInstaller"
-SCRIPT_NAME="0xInstaller.sh"
-
 # Function to display banner
 display_banner() {
     if ! command -v figlet &>/dev/null; then
@@ -35,31 +30,54 @@ display_banner() {
     echo -e "Author : Md. Shahriar Alam Shaon ( 0xShahriar )\nVersion : 1.0\n" | lolcat
 }
 
-# Function to check for updates
+# Define variables for script paths and arguments
+SCRIPT="$(readlink -f "$0")"
+SCRIPTFILE="$(basename "$SCRIPT")"
+SCRIPTPATH="$(dirname "$SCRIPT")"
+ARGS=( "$@" )
+BRANCH="main"
+
+# Define variables for repository URL and branch
+REPO_URL="https://github.com/0xShahriar/0xInstaller.git"  # Repository URL
+BRANCH="main"                                             # Default branch to check for updates
+
+# Function to check and apply updates from GitHub
 check_for_updates() {
-    if [ -d "$SCRIPT_DIR" ]; then
-        echo "Checking for updates in $SCRIPT_DIR..."
-        cd "$SCRIPT_DIR" || exit
-        git fetch origin
-        LOCAL=$(git rev-parse HEAD)
-        REMOTE=$(git rev-parse origin/main)
-        if [ "$LOCAL" != "$REMOTE" ]; then
-            echo "Updates found. Pulling latest changes..."
-            git reset --hard origin/main
-            chmod +x "$SCRIPT_NAME"
-            echo "Updates applied. Re-running the script..."
-            exec "$SCRIPT_DIR/$SCRIPT_NAME"
-        else
-            echo "Already up to date."
-        fi
-    else
-        echo "Cloning repository..."
-        git clone "$REPO_URL" "$SCRIPT_DIR"
-        chmod +x "$SCRIPT_DIR/$SCRIPT_NAME"
-        echo "Repository cloned. Re-running the script..."
-        exec "$SCRIPT_DIR/$SCRIPT_NAME"
+    echo "Checking for updates from GitHub..."
+
+    # Get full path of the script and related information
+    SCRIPT="$(readlink -f "$0")"
+    SCRIPTFILE="$(basename "$SCRIPT")"        # Name of the script file
+    SCRIPTPATH="$(dirname "$SCRIPT")"         # Directory where the script is located
+    ARGS=( "$@" )                             # Preserve any arguments passed to the script
+
+    # Navigate to the script directory
+    cd "$SCRIPTPATH" || { echo "Failed to access script directory: $SCRIPTPATH"; exit 1; }
+
+    # Fetch the latest changes from the GitHub repository
+    git fetch origin "$BRANCH"
+
+    # Check if the script file has been updated
+    if [ -n "$(git diff --name-only "origin/$BRANCH" "$SCRIPTFILE")" ]; then
+        echo "A new version of the script is available. Updating..."
+        git pull --force
+        git checkout "$BRANCH"
+        git pull --force
+        echo "Update applied successfully. Restarting the script..."
+        
+        # Navigate back to the original working directory and re-run the script
+        cd - || exit 1
+        exec "$SCRIPT" "${ARGS[@]}"
+        
+        # Exit the old instance after the update
+        exit 1
     fi
+
+    echo "The script is already up to date."
 }
+
+# Call the update function at the start of the script
+check_for_updates
 
 # Function to check and install a package
 check_and_install() {
