@@ -45,39 +45,28 @@ BRANCH="main"                                             # Default branch to ch
 check_for_updates() {
     echo "Checking for updates from GitHub..."
 
-    # Get full path of the script and related information
     SCRIPT="$(readlink -f "$0")"
-    SCRIPTFILE="$(basename "$SCRIPT")"        # Name of the script file
-    SCRIPTPATH="$(dirname "$SCRIPT")"         # Directory where the script is located
-    ARGS=( "$@" )                             # Preserve any arguments passed to the script
+    SCRIPTFILE="$(basename "$SCRIPT")"        
+    SCRIPTPATH="$(dirname "$SCRIPT")"         
+    ARGS=( "$@" )                             
 
-    # Navigate to the script directory
     cd "$SCRIPTPATH" || { echo "Failed to access script directory: $SCRIPTPATH"; exit 1; }
 
-    # Fetch the latest changes from the GitHub repository
     git fetch origin "$BRANCH"
 
-    # Check if the script file has been updated
     if [ -n "$(git diff --name-only "origin/$BRANCH" "$SCRIPTFILE")" ]; then
         echo "A new version of the script is available. Updating..."
-        git pull --force
-        git checkout "$BRANCH"
-        git pull --force
-        echo "Update applied successfully. Restarting the script..."
-        
-        # Navigate back to the original working directory and re-run the script
-        cd - || exit 1
-        exec "$SCRIPT" "${ARGS[@]}"
-        
-        # Exit the old instance after the update
-        exit 1
+        git pull --force || { echo "Failed to pull updates. Exiting."; exit 1; }
+        echo "Update applied successfully."
+    else
+        echo "The script is already up to date."
     fi
-
-    echo "The script is already up to date."
 }
 
-# Call the update function at the start of the script
-check_for_updates
+# Call check_for_updates only if DRY_RUN is false
+if ! $DRY_RUN; then
+    check_for_updates
+fi
 
 # Function to check and install a package
 check_and_install() {
