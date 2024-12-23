@@ -3,6 +3,14 @@
 # Script to install specified tools
 # Author: Md. Shahriar Alam Shaon (0xShahriar)
 
+# Current script version
+CURRENT_VERSION="1.0.1"
+
+# GitHub repository details
+REPO_URL="https://raw.githubusercontent.com/0xShahriar/0xInstaller/main"
+SCRIPT_NAME="0xInstaller.sh"
+VERSION_FILE="VERSION.txt"
+
 # Colors for output
 GREEN="\e[32m"
 RED="\e[31m"
@@ -27,57 +35,44 @@ display_banner() {
         apt-get install lolcat -y
     fi
     figlet -f smslant "0xInstaller" | lolcat
-    echo -e "Author : Md. Shahriar Alam Shaon ( 0xShahriar )\nVersion : 1.0\n" | lolcat
+    echo -e "Author : Md. Shahriar Alam Shaon ( 0xShahriar )\nVersion : $CURRENT_VERSION\n" | lolcat
 }
 
-# Define variables for script paths and arguments
-SCRIPT="$(readlink -f "$0")"
-SCRIPTFILE="$(basename "$SCRIPT")"
-SCRIPTPATH="$(dirname "$SCRIPT")"
-ARGS=( "$@" )
-BRANCH="main"
+# Function to compare semantic versions
+version_gt() {
+    [ "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1" ]
+}
 
-# Define variables for repository URL and branch
-REPO_URL="https://github.com/0xShahriar/0xInstaller.git"  # Repository URL
-BRANCH="main"                                             # Default branch to check for updates
-
-# Function to check and apply updates from GitHub
+# Function to check for updates
 check_for_updates() {
-    echo "Checking for updates from GitHub..."
-
-    # Get full path of the script and related information
-    SCRIPT="$(readlink -f "$0")"
-    SCRIPTFILE="$(basename "$SCRIPT")"        # Name of the script file
-    SCRIPTPATH="$(dirname "$SCRIPT")"         # Directory where the script is located
-    ARGS=( "$@" )                             # Preserve any arguments passed to the script
-
-    # Navigate to the script directory
-    cd "$SCRIPTPATH" || { echo "Failed to access script directory: $SCRIPTPATH"; exit 1; }
-
-    # Fetch the latest changes from the GitHub repository
-    git fetch origin "$BRANCH"
-
-    # Check if the script file has been updated
-    if [ -n "$(git diff --name-only "origin/$BRANCH" "$SCRIPTFILE")" ]; then
-        echo "A new version of the script is available. Updating..."
-        git pull --force
-        git checkout "$BRANCH"
-        git pull --force
-        echo "Update applied successfully. Restarting the script..."
-        
-        # Navigate back to the original working directory and re-run the script
-        cd - || exit 1
-        exec "$SCRIPT" "${ARGS[@]}"
-        
-        # Exit the old instance after the update
-        exit 1
+    echo "Checking for updates..."
+    LATEST_VERSION=$(curl -s "$REPO_URL/$VERSION_FILE")
+    
+    if [[ -z "$LATEST_VERSION" ]]; then
+        echo "Unable to fetch the latest version. Skipping update check."
+        return
     fi
-
-    echo "The script is already up to date."
+    
+    if version_gt "$LATEST_VERSION" "$CURRENT_VERSION"; then
+        echo -e "${GREEN}A new version ($LATEST_VERSION) is available. You are using version $CURRENT_VERSION.${RESET}"
+        read -p "Do you want to update? (y/N): " response
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+            echo "Updating the script..."
+            curl -s -o "$SCRIPT_NAME" "$REPO_URL/$SCRIPT_NAME"
+            if [[ $? -ne 0 ]]; then
+                echo -e "${RED}Failed to download the updated script. Please try again later.${RESET}"
+                exit 1
+            fi
+            chmod +x "$SCRIPT_NAME"
+            echo "Update applied successfully. Restarting the script..."
+            exec ./"$SCRIPT_NAME" "${@}"
+        else
+            echo "Continuing with the current version."
+        fi
+    else
+        echo "You are using the latest version ($CURRENT_VERSION)."
+    fi
 }
-
-# Call the update function at the start of the script
-check_for_updates
 
 # Function to check and install a package
 check_and_install() {
@@ -88,9 +83,6 @@ check_and_install() {
         echo "$1 is already installed."
     fi
 }
-
-# Install libpcap-dev for Go-based tools that require it
-check_and_install "libpcap-dev"
 
 # Function to install Go-based tools
 install_go_tool() {
@@ -133,6 +125,9 @@ fi
 
 # Display banner
 display_banner
+
+# Run update check
+check_for_updates "$@"
 
 # Install essential packages
 echo "Installing essential packages..."
