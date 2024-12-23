@@ -16,6 +16,10 @@ GREEN="\e[32m"
 RED="\e[31m"
 RESET="\e[0m"
 
+# Set up Go environment
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin
+
 # Log file
 LOG_FILE="$HOME/0xInstaller/0xInstaller.log"
 exec > >(tee -i "$LOG_FILE") 2>&1
@@ -105,7 +109,12 @@ install_go_tool() {
     local url=$2
     if ! command -v "$tool" &>/dev/null; then
         echo "Installing $tool..."
-        go install -v "$url"
+        go install "$url"
+        if [ $? -eq 0 ]; then
+            echo "$tool installed successfully."
+        else
+            echo "Failed to install $tool. Please check your Go configuration."
+        fi
     else
         echo "$tool is already installed."
     fi
@@ -173,7 +182,13 @@ install_go_tools=(
     "naabu github.com/projectdiscovery/naabu/v2/cmd/naabu@latest"
 )
 for tool_info in "${install_go_tools[@]}"; do
-    $DRY_RUN || install_go_tool $tool_info
+    tool_name=$(echo "$tool_info" | awk '{print $1}')
+    tool_url=$(echo "$tool_info" | awk '{print $2}')
+    if $DRY_RUN; then
+        echo "Dry-run: Skipping installation of $tool_name."
+    else
+        install_go_tool "$tool_name" "$tool_url"
+    fi
 done
 
 # Install Python-based tools
