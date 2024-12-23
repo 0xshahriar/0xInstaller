@@ -4,7 +4,7 @@
 # Author: Md. Shahriar Alam Shaon (0xShahriar)
 
 # Current script version
-CURRENT_VERSION="1.0.1"
+CURRENT_VERSION="1.0.2"
 
 # GitHub repository details
 REPO_URL="https://raw.githubusercontent.com/0xShahriar/0xInstaller/main"
@@ -28,14 +28,29 @@ fi
 
 # Function to display banner
 display_banner() {
+    # Ensure figlet is installed
     if ! command -v figlet &>/dev/null; then
-        apt-get install figlet -y
+        echo "Installing figlet..."
+        apt-get install -y -qq figlet
     fi
-    if ! command -v lolcat -i &>/dev/null; then
-        apt-get install lolcat -y
+
+    # Ensure lolcat is installed
+    if ! command -v lolcat &>/dev/null; then
+        echo "Installing lolcat..."
+        if ! command -v gem &>/dev/null; then
+            apt-get install -y -qq ruby
+        fi
+        gem install lolcat
     fi
-    figlet -f smslant "0xInstaller" | lolcat
-    echo -e "Author : Md. Shahriar Alam Shaon ( 0xShahriar )\nVersion : $CURRENT_VERSION\n" | lolcat
+
+    # Display the banner
+    if command -v figlet &>/dev/null && command -v lolcat &>/dev/null; then
+        figlet -f smslant "0xInstaller" | lolcat
+        echo "Author: Md. Shahriar Alam Shaon (0xShahriar)" | lolcat
+        echo "Version: $CURRENT_VERSION" | lolcat
+    else
+        echo "0xInstaller - Author: Md. Shahriar Alam Shaon (0xShahriar) - Version: $CURRENT_VERSION"
+    fi
 }
 
 # Function to compare semantic versions
@@ -78,7 +93,7 @@ check_for_updates() {
 check_and_install() {
     if ! dpkg -l | grep -q "$1"; then
         echo "Installing $1..."
-        apt-get install -y "$1"
+        apt-get install -y -qq "$1"
     else
         echo "$1 is already installed."
     fi
@@ -120,8 +135,11 @@ fi
 
 # Update and upgrade system
 if ! $DRY_RUN; then
-    apt-get update && apt-get upgrade -y
+    apt-get update -qq && apt-get upgrade -y -qq
 fi
+
+# Clear screen
+clear
 
 # Display banner
 display_banner
