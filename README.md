@@ -96,7 +96,7 @@
 
 ## Troubleshooting
 
-- Permission Denied: Ensure you run the script with sudo.
+- Permission Denied: Ensure you run the script at root privilege.
 - Missing Dependencies: The script will attempt to install missing dependencies like figlet and lolcat.
 - Installation Fails: Check the log file for details:
   ```bash
