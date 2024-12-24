@@ -4,7 +4,7 @@
 # Author: Md. Shahriar Alam Shaon (0xShahriar)
 
 # Current script version
-CURRENT_VERSION="1.0.2"
+CURRENT_VERSION="1.1.0"
 
 # GitHub repository details
 REPO_URL="https://raw.githubusercontent.com/0xShahriar/0xInstaller/main"
@@ -32,29 +32,18 @@ fi
 
 # Function to display banner
 display_banner() {
-    # Ensure figlet is installed
-    if ! command -v figlet &>/dev/null; then
-        echo "Installing figlet..."
-        apt-get install -y -qq figlet
-    fi
-
-    # Ensure lolcat is installed
-    if ! command -v lolcat &>/dev/null; then
-        echo "Installing lolcat..."
-        if ! command -v gem &>/dev/null; then
-            apt-get install -y -qq ruby
+    # Ensure figlet and lolcat are installed
+    for pkg in figlet lolcat; do
+        if ! command -v "$pkg" &>/dev/null; then
+            echo "Installing $pkg..."
+            apt-get install -y -qq "$pkg"
         fi
-        gem install lolcat
-    fi
+    done
 
     # Display the banner
-    if command -v figlet &>/dev/null && command -v lolcat &>/dev/null; then
-        figlet -f smslant "0xInstaller" | lolcat
-        echo "Author: Md. Shahriar Alam Shaon (0xShahriar)" | lolcat
-        echo "Version: $CURRENT_VERSION" | lolcat
-    else
-        echo "0xInstaller - Author: Md. Shahriar Alam Shaon (0xShahriar) - Version: $CURRENT_VERSION"
-    fi
+    figlet -f smslant "0xInstaller" | lolcat
+    echo "Author: Md. Shahriar Alam Shaon (0xShahriar)" | lolcat
+    echo "Version: $CURRENT_VERSION" | lolcat
 }
 
 # Function to compare semantic versions
@@ -93,28 +82,32 @@ check_for_updates() {
     fi
 }
 
+# Function to check command success
+check_command() {
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Error: $1 failed. Check the logs for more details.${RESET}"
+        exit 1
+    fi
+}
+
 # Function to check and install a package
 check_and_install() {
     if ! dpkg -l | grep -q "$1"; then
         echo "Installing $1..."
         apt-get install -y -qq "$1"
+        check_command "$1 installation"
     else
         echo "$1 is already installed."
     fi
 }
 
-# Function to install Go-based tools
-install_go_tool() {
+# Function to install Go-based tools in parallel
+install_go_tool_parallel() {
     local tool=$1
     local url=$2
     if ! command -v "$tool" &>/dev/null; then
         echo "Installing $tool..."
-        go install "$url"
-        if [ $? -eq 0 ]; then
-            echo "$tool installed successfully."
-        else
-            echo "Failed to install $tool. Please check your Go configuration."
-        fi
+        go install "$url" &
     else
         echo "$tool is already installed."
     fi
@@ -127,24 +120,40 @@ install_python_tool() {
     if [ ! -d "$dir" ]; then
         echo "Installing $repo..."
         git clone "$repo" "$dir"
+        check_command "Cloning $repo"
         cd "$dir" || exit
         pip3 install -r requirements.txt
+        check_command "Installing dependencies for $repo"
         cd ..
     else
         echo "$repo is already installed."
     fi
 }
 
-# Check for dry-run mode
-DRY_RUN=false
-if [[ $1 == "--dry-run" ]]; then
-    DRY_RUN=true
-    echo -e "${GREEN}Dry-run mode enabled. No installations will occur.${RESET}"
+# Parse configuration file
+if [ -f "tools.conf" ]; then
+    source tools.conf
 fi
+
+# Command-line argument parsing
+for arg in "$@"; do
+    case $arg in
+        --dry-run) DRY_RUN=true ;;
+        --install-go-tools) INSTALL_GO_TOOLS=true ;;
+        --install-python-tools) INSTALL_PYTHON_TOOLS=true ;;
+        *) echo -e "${RED}Unknown option: $arg${RESET}" && exit 1 ;;
+    esac
+done
+
+# Defaults
+DRY_RUN=${DRY_RUN:-false}
+INSTALL_GO_TOOLS=${INSTALL_GO_TOOLS:-true}
+INSTALL_PYTHON_TOOLS=${INSTALL_PYTHON_TOOLS:-true}
 
 # Update and upgrade system
 if ! $DRY_RUN; then
     apt-get update -qq && apt-get upgrade -y -qq
+    check_command "System update and upgrade"
 fi
 
 # Clear screen
@@ -169,36 +178,45 @@ for tool in nmap; do
 done
 
 # Install Go-based tools
-echo "Installing Go-based tools..."
-install_go_tools=(
-    "httpx github.com/projectdiscovery/httpx/cmd/httpx@latest"
-    "waybackurls github.com/tomnomnom/waybackurls@latest"
-    "anew github.com/tomnomnom/anew@latest"
-    "nuclei github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest"
-    "shuffledns github.com/projectdiscovery/shuffledns/cmd/shuffledns@latest"
-    "subfinder github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
-    "ffuf github.com/ffuf/ffuf@latest"
-    "uncover github.com/projectdiscovery/uncover/cmd/uncover@latest"
-    "naabu github.com/projectdiscovery/naabu/v2/cmd/naabu@latest"
-)
-for tool_info in "${install_go_tools[@]}"; do
-    tool_name=$(echo "$tool_info" | awk '{print $1}')
-    tool_url=$(echo "$tool_info" | awk '{print $2}')
-    if $DRY_RUN; then
-        echo "Dry-run: Skipping installation of $tool_name."
-    else
-        install_go_tool "$tool_name" "$tool_url"
-    fi
-done
+if $INSTALL_GO_TOOLS; then
+    echo "Installing Go-based tools..."
+    install_go_tools=(
+        "httpx github.com/projectdiscovery/httpx/cmd/httpx@latest"
+        "waybackurls github.com/tomnomnom/waybackurls@latest"
+        "anew github.com/tomnomnom/anew@latest"
+        "nuclei github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest"
+        "shuffledns github.com/projectdiscovery/shuffledns/cmd/shuffledns@latest"
+        "subfinder github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
+        "ffuf github.com/ffuf/ffuf@latest"
+        "uncover github.com/projectdiscovery/uncover/cmd/uncover@latest"
+        "naabu github.com/projectdiscovery/naabu/v2/cmd/naabu@latest"
+    )
+    for tool_info in "${install_go_tools[@]}"; do
+        tool_name=$(echo "$tool_info" | awk '{print $1}')
+        tool_url=$(echo "$tool_info" | awk '{print $2}')
+        if $DRY_RUN; then
+            echo "Dry-run: Skipping installation of $tool_name."
+        else
+            install_go_tool_parallel "$tool_name" "$tool_url"
+        fi
+    done
+    wait
+fi
 
 # Install Python-based tools
-echo "Installing Python-based tools..."
-install_python_tools=(
-    "https://github.com/jordanpotti/AWSBucketDump.git AWSBucketDump"
-    "https://github.com/aboul3la/Sublist3r.git Sublist3r"
-)
-for tool_info in "${install_python_tools[@]}"; do
-    $DRY_RUN || install_python_tool $tool_info
-done
+if $INSTALL_PYTHON_TOOLS; then
+    echo "Installing Python-based tools..."
+    install_python_tools=(
+        "https://github.com/jordanpotti/AWSBucketDump.git AWSBucketDump"
+        "https://github.com/aboul3la/Sublist3r.git Sublist3r"
+    )
+    for tool_info in "${install_python_tools[@]}"; do
+        if $DRY_RUN; then
+            echo "Dry-run: Skipping installation of $tool_info."
+        else
+            install_python_tool $tool_info
+        fi
+    done
+fi
 
 echo -e "${GREEN}Installation complete!${RESET}"
