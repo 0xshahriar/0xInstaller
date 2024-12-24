@@ -50,20 +50,25 @@
    ```bash
    git clone https://github.com/0xShahriar/0xInstaller.git
    cd 0xInstaller
+   ```
 2. Make the script executable:
    ```bash
    chmod +x 0xInstaller.sh
+   ```
 3. Run the script:
    ```bash
    ./0xInstaller.sh
-4. Optional: Use the dry-run mode to preview actions without making changes:
+   ```
+4. **Optional**: Use the dry-run mode to preview actions without making changes:
    ```bash
    ./0xInstaller.sh --dry-run
+   ```
 5. Selective Installation:
   - Use command-line arguments:
     ```bash
     ./0xInstaller.sh --install-go-tools
     ./0xInstaller.sh --install-python-tools
+    ```
   - Alternatively, create a tools.conf file:
     ```bash
     # tools.conf
