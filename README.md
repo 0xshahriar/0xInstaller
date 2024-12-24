@@ -1,57 +1,51 @@
 # 0xInstaller
 
-`0xInstaller` is a powerful and user-friendly bash script designed to automate the installation of essential development and cybersecurity tools. This script is perfect for developers, ethical hackers, and security researchers who want to set up their environment quickly and efficiently.
-
----
+## Overview
+**0xInstaller** is an all-in-one installer script designed to simplify the installation of essential packages, cybersecurity tools, and development utilities. It is particularly useful for setting up a new Linux environment for penetration testing, ethical hacking, or general software development.
 
 ## Features
-
-- Automatically installs development tools such as `git`, `python3`, and `golang`.
-- Sets up popular cybersecurity tools like `Nmap`, `Httpx`, `Nuclei`, `Subfinder`, and more.
-- Includes an update checker to keep the script up-to-date.
-- Displays a colorful banner for an engaging user experience.
-- Error handling, logging, and dry-run mode for safe execution.
-- Supports Linux systems (Debian-based distributions).
-
----
+- **Root Privileges Check**: Ensures the script is run with sufficient permissions.
+- **Automatic Updates**: Checks for and applies updates to the script itself.
+- **Dry-Run Mode**: Simulate installations without making changes.
+- **Customizable Installation**:
+  - Supports Go-based and Python-based tools.
+  - Allows selective installation via configuration files or command-line arguments.
+- **Parallel Processing**: Faster installations using parallel execution for Go-based tools.
+- **Error Handling**: Robust checks for all critical commands, ensuring reliability.
+- **Logging**: Maintains a log of all operations for troubleshooting and auditing.
 
 ## Tools Installed
-
-### Development Tools
-- **Git**: Version control system.
-- **Python3**: Programming language.
-- **Pip3**: Python package manager.
-- **Go**: Programming language.
-- **Ruby**: Scripting language.
-
-### General Utilities
-- **Tree**: Directory structure visualization.
+### Essential Packages
+- [`git`](https://git-scm.com/)
+- [`python3`](https://www.python.org/) and [`python3-pip`](https://pip.pypa.io/)
+- [`golang`](https://go.dev/)
+- [`ruby`](https://www.ruby-lang.org/)
+- [`tree`](http://mama.indstate.edu/users/ice/tree/)
 
 ### Cybersecurity Tools
-- **Nmap**: Network mapper.
-- **Httpx**: HTTP probing tool.
-- **Waybackurls**: Fetch URLs from archive.org.
-- **Anew**: Tool to append unique lines to files.
-- **Nuclei**: Vulnerability scanner.
-- **Shuffledns**: Subdomain enumeration tool.
-- **Subfinder**: Subdomain discovery tool.
-- **Ffuf**: Fuzzing tool.
-- **Naabu**: Port scanner.
-- **Uncover**: Asset discovery tool.
-- **AWSBucketDump**: Tool for auditing S3 buckets.
-- **Sublist3r**: Subdomain enumeration tool.
+- [`nmap`](https://nmap.org/)
 
----
+### Go-Based Tools
+- [`httpx`](https://github.com/projectdiscovery/httpx)
+- [`waybackurls`](https://github.com/tomnomnom/waybackurls)
+- [`anew`](https://github.com/tomnomnom/anew)
+- [`nuclei`](https://github.com/projectdiscovery/nuclei)
+- [`shuffledns`](https://github.com/projectdiscovery/shuffledns)
+- [`subfinder`](https://github.com/projectdiscovery/subfinder)
+- [`ffuf`](https://github.com/ffuf/ffuf)
+- [`uncover`](https://github.com/projectdiscovery/uncover)
+- [`naabu`](https://github.com/projectdiscovery/naabu)
 
-## Prerequisites
+### Python-Based Tools
+- [`AWSBucketDump`](https://github.com/jordanpotti/AWSBucketDump)
+- [`Sublist3r`](https://github.com/aboul3la/Sublist3r)
 
-- A Debian-based Linux system (e.g., Ubuntu, Kali Linux).
-- Root or sudo privileges.
+## Requirements
+- **Operating System**: Debian-based distributions (e.g., Ubuntu, Kali Linux).
+- **Root Privileges**: The script requires root access to install system-wide packages.
+- **Internet Connection**: Required to download and install tools.
 
----
-
-## Installation
-
+## Installation and Usage
 1. Clone the repository:
    ```bash
    git clone https://github.com/0xShahriar/0xInstaller.git
@@ -61,30 +55,50 @@
    chmod +x 0xInstaller.sh
 3. Run the script:
    ```bash
-   sudo ./0xInstaller.sh
+   ./0xInstaller.sh
+4. Optional: Use the dry-run mode to preview actions without making changes:
+   ```bash
+   ./0xInstaller.sh --dry-run
+5. Selective Installation:
+  - Use command-line arguments:
+    ```bash
+    ./0xInstaller.sh --install-go-tools
+    ./0xInstaller.sh --install-python-tools
+  - Alternatively, create a tools.conf file:
+    ```bash
+    # tools.conf
+    INSTALL_GO_TOOLS=true
+    INSTALL_PYTHON_TOOLS=false
 
 ---
 
-## Usage
+## Configuration
 
-- **Normal Execution**: Run the script to install all tools.
-   ```bash
-   sudo ./0xInstaller.sh
-- **Dry-Run Mode**: Test the script without making any changes.
-   ```bash
-   sudo ./0xInstaller.sh --dry-run
-- **Update Checker**: Automatically updates the script from the GitHub repository.
-
----
+- The script supports a tools.conf file for custom installations. Example:
+```bash
+  # tools.conf
+  INSTALL_GO_TOOLS=true    # Install Go-based tools
+  INSTALL_PYTHON_TOOLS=false # Skip Python-based Tools
 
 ## Logs
-- All script output is logged to ```~/0xInstaller.log```. Use this file for debugging or to review installation progress.
+
+- All script output is logged to ```$HOME/0xInstaller/0xInstaller.log```. Use this file for debugging or to review installation progress.
 
 ---
+
+## Troubleshooting
+
+- Permission Denied: Ensure you run the script with sudo.
+- Missing Dependencies: The script will attempt to install missing dependencies like figlet and lolcat.
+- Installation Fails: Check the log file for details:
+  ```bash
+  less $HOME/0xInstaller/0xInstaller.log
+
+--
 
 ## Contribution
 
-Contributions are welcome! If you’d like to improve this script or add support for more tools, please fork the repository and create a pull request.
+- Contributions are welcome! If you’d like to improve this script or add support for more tools, please fork the repository and create a pull request.
 
 ---
 
