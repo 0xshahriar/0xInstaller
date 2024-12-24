@@ -103,7 +103,7 @@
   less $HOME/0xInstaller/0xInstaller.log
   ```
 
---
+---
 
 ## Contribution
 
