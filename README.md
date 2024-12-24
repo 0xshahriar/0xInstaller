@@ -1,7 +1,7 @@
 # 0xInstaller
 
 ## Overview
-**0xInstaller** is an all-in-one installer script designed to simplify the installation of essential packages, cybersecurity tools, and development utilities. It is particularly useful for setting up a new Linux environment for penetration testing, ethical hacking, or general software development.
+**0xInstaller** is an all-in-one installer script designed to simplify the installation of essential packages, cybersecurity tools, and development utilities. It is particularly useful for setting up a new Linux environment for penetration testing or, ethical hacking.
 
 ## Features
 - **Root Privileges Check**: Ensures the script is run with sufficient permissions.
