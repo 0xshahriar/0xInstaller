@@ -69,16 +69,19 @@
     # tools.conf
     INSTALL_GO_TOOLS=true
     INSTALL_PYTHON_TOOLS=false
+    ```
+  
 
 ---
 
 ## Configuration
 
 - The script supports a tools.conf file for custom installations. Example:
-```bash
+  ```bash
   # tools.conf
   INSTALL_GO_TOOLS=true    # Install Go-based tools
   INSTALL_PYTHON_TOOLS=false # Skip Python-based Tools
+  ```
 
 ## Logs
 
@@ -93,6 +96,7 @@
 - Installation Fails: Check the log file for details:
   ```bash
   less $HOME/0xInstaller/0xInstaller.log
+  ```
 
 --
 
