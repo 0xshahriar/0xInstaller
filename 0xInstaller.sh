@@ -4,9 +4,9 @@
 # Author: Md. Shahriar Alam Shaon (0xShahriar)
 
 # Current script version
-CURRENT_VERSION="1.1.0"
+CURRENT_VERSION="1.0.2"
 
-# GitHub repository details
+# GitHub repository for raw file access
 REPO_URL="https://raw.githubusercontent.com/0xShahriar/0xInstaller/main"
 SCRIPT_NAME="0xInstaller.sh"
 VERSION_FILE="VERSION.txt"
@@ -24,6 +24,23 @@ export PATH=$PATH:$GOPATH/bin
 LOG_FILE="$HOME/0xInstaller/0xInstaller.log"
 exec > >(tee -i "$LOG_FILE") 2>&1
 
+# Function to check internet connectivity
+check_internet() {
+    echo "Checking internet connectivity..."
+    if ! ping -c 1 google.com &>/dev/null; then
+        echo -e "${RED}Error: No internet connection. Please check your network.${RESET}"
+        exit 1
+    fi
+}
+
+# Function to rotate logs
+rotate_logs() {
+    if [ -f "$LOG_FILE" ] && [ "$(wc -c <"$LOG_FILE")" -ge 10485760 ]; then
+        mv "$LOG_FILE" "${LOG_FILE}_$(date +%Y%m%d%H%M%S)"
+        echo "Log file rotated due to size limit."
+    fi
+}
+
 # Pre-check for root privileges
 if [ "$EUID" -ne 0 ]; then
     echo -e "${RED}This script requires root privileges. Please run as root.${RESET}"
@@ -32,15 +49,12 @@ fi
 
 # Function to display banner
 display_banner() {
-    # Ensure figlet and lolcat are installed
     for pkg in figlet lolcat; do
         if ! command -v "$pkg" &>/dev/null; then
             echo "Installing $pkg..."
             apt-get install -y -qq "$pkg"
         fi
     done
-
-    # Display the banner
     figlet -f smslant "0xInstaller" | lolcat
     echo "Author: Md. Shahriar Alam Shaon (0xShahriar)" | lolcat
     echo "Version: $CURRENT_VERSION" | lolcat
@@ -55,37 +69,28 @@ version_gt() {
 check_for_updates() {
     echo "Checking for updates..."
     LATEST_VERSION=$(curl -s "$REPO_URL/$VERSION_FILE")
-    
     if [[ -z "$LATEST_VERSION" ]]; then
         echo "Unable to fetch the latest version. Skipping update check."
         return
     fi
-    
     if version_gt "$LATEST_VERSION" "$CURRENT_VERSION"; then
-        echo -e "${GREEN}A new version ($LATEST_VERSION) is available. You are using version $CURRENT_VERSION.${RESET}"
-        read -p "Do you want to update? (y/N): " response
+        echo -e "${GREEN}New version available ($LATEST_VERSION). You are using ($CURRENT_VERSION).${RESET}"
+        read -p "Update script? (y/N): " response
         if [[ "$response" =~ ^[Yy]$ ]]; then
-            echo "Updating the script..."
-            curl -s -o "$SCRIPT_NAME" "$REPO_URL/$SCRIPT_NAME"
-            if [[ $? -ne 0 ]]; then
-                echo -e "${RED}Failed to download the updated script. Please try again later.${RESET}"
-                exit 1
-            fi
-            chmod +x "$SCRIPT_NAME"
-            echo "Update applied successfully. Restarting the script..."
-            exec ./"$SCRIPT_NAME" "${@}"
-        else
-            echo "Continuing with the current version."
+            echo "Updating script..."
+            curl -s -o "$SCRIPT_NAME" "$REPO_URL/$SCRIPT_NAME" && chmod +x "$SCRIPT_NAME"
+            echo "Update successful. Restarting script..."
+            exec ./"$SCRIPT_NAME" "$@"
         fi
     else
-        echo "You are using the latest version ($CURRENT_VERSION)."
+        echo "You are using the latest version."
     fi
 }
 
 # Function to check command success
 check_command() {
     if [ $? -ne 0 ]; then
-        echo -e "${RED}Error: $1 failed. Check the logs for more details.${RESET}"
+        echo -e "${RED}Error: $1 failed. Check the logs for details.${RESET}"
         exit 1
     fi
 }
@@ -119,21 +124,15 @@ install_python_tool() {
     local dir=$2
     if [ ! -d "$dir" ]; then
         echo "Installing $repo..."
-        git clone "$repo" "$dir"
-        check_command "Cloning $repo"
-        cd "$dir" || exit
-        pip3 install -r requirements.txt
-        check_command "Installing dependencies for $repo"
-        cd ..
+        git clone "$repo" "$dir" && cd "$dir" && pip3 install -r requirements.txt && cd ..
+        check_command "Installation of $repo"
     else
         echo "$repo is already installed."
     fi
 }
 
-# Parse configuration file
-if [ -f "tools.conf" ]; then
-    source tools.conf
-fi
+# Parse configuration
+[ -f "tools.conf" ] && source tools.conf
 
 # Command-line argument parsing
 for arg in "$@"; do
@@ -150,16 +149,10 @@ DRY_RUN=${DRY_RUN:-false}
 INSTALL_GO_TOOLS=${INSTALL_GO_TOOLS:-true}
 INSTALL_PYTHON_TOOLS=${INSTALL_PYTHON_TOOLS:-true}
 
-# Update and upgrade system
-if ! $DRY_RUN; then
-    apt-get update -qq && apt-get upgrade -y -qq
-    check_command "System update and upgrade"
-fi
-
-# Clear screen
+# Clear screen and check prerequisites
 clear
-
-# Display banner
+rotate_logs
+check_internet
 display_banner
 
 # Run update check
@@ -180,25 +173,13 @@ done
 # Install Go-based tools
 if $INSTALL_GO_TOOLS; then
     echo "Installing Go-based tools..."
-    install_go_tools=(
+    go_tools=(
         "httpx github.com/projectdiscovery/httpx/cmd/httpx@latest"
         "waybackurls github.com/tomnomnom/waybackurls@latest"
-        "anew github.com/tomnomnom/anew@latest"
-        "nuclei github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest"
-        "shuffledns github.com/projectdiscovery/shuffledns/cmd/shuffledns@latest"
-        "subfinder github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
-        "ffuf github.com/ffuf/ffuf@latest"
-        "uncover github.com/projectdiscovery/uncover/cmd/uncover@latest"
-        "naabu github.com/projectdiscovery/naabu/v2/cmd/naabu@latest"
     )
-    for tool_info in "${install_go_tools[@]}"; do
-        tool_name=$(echo "$tool_info" | awk '{print $1}')
-        tool_url=$(echo "$tool_info" | awk '{print $2}')
-        if $DRY_RUN; then
-            echo "Dry-run: Skipping installation of $tool_name."
-        else
-            install_go_tool_parallel "$tool_name" "$tool_url"
-        fi
+    for tool_info in "${go_tools[@]}"; do
+        IFS=' ' read -r tool url <<< "$tool_info"
+        $DRY_RUN && echo "Dry-run: $tool installation skipped." || install_go_tool_parallel "$tool" "$url"
     done
     wait
 fi
@@ -206,16 +187,13 @@ fi
 # Install Python-based tools
 if $INSTALL_PYTHON_TOOLS; then
     echo "Installing Python-based tools..."
-    install_python_tools=(
+    python_tools=(
         "https://github.com/jordanpotti/AWSBucketDump.git AWSBucketDump"
         "https://github.com/aboul3la/Sublist3r.git Sublist3r"
     )
-    for tool_info in "${install_python_tools[@]}"; do
-        if $DRY_RUN; then
-            echo "Dry-run: Skipping installation of $tool_info."
-        else
-            install_python_tool $tool_info
-        fi
+    for tool_info in "${python_tools[@]}"; do
+        IFS=' ' read -r repo dir <<< "$tool_info"
+        $DRY_RUN && echo "Dry-run: $repo installation skipped." || install_python_tool "$repo" "$dir"
     done
 fi
 
